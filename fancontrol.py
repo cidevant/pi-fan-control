@@ -9,23 +9,29 @@ OFF_THRESHOLD = 55  # (degress Celsius) Fan shuts off at this temperature.
 SLEEP_INTERVAL = 5  # (seconds) How often we check the core temperature.
 GPIO_PIN = 14  # Which GPIO pin you're using to control the fan.
   
-def measure_temp():
-        temp = os.popen("vcgencmd measure_temp").readline()
-        formatted_temp = temp.replace("temp=","").replace("'C", "")
-        formatted_temp = formatted_temp.replace("\n", "")
-        
-        return int(float(formatted_temp))
-  
+def measure_CPU_temp():
+        temp = os.popen("cat /sys/class/thermal/thermal_zone0/temp").readline()
+        formatted_temp = temp.replace("\n", "")
+
+        return int(float(temp) / 1000) 
+
+# def measure_GPU_temp():
+#         temp = os.popen("/opt/vc/bin/vcgencmd measure_temp").readline()
+#         formatted_temp = temp.replace("temp=","").replace("'C", "")
+#         formatted_temp = formatted_temp.replace("\n", "")
+
+#         return int(float(formatted_temp))
+
 if __name__ == '__main__':
     # Validate the on and off thresholds
     if OFF_THRESHOLD >= ON_THRESHOLD:
         raise RuntimeError('OFF_THRESHOLD must be less than ON_THRESHOLD')
 
     is_running = False
-    first_run = False
+    is_gpio_initialized = False
 
     while True:        
-        if not first_run:
+        if not is_gpio_initialized:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(GPIO_PIN, GPIO.OUT)
             fan = GPIO.PWM(GPIO_PIN, 100)
@@ -35,13 +41,13 @@ if __name__ == '__main__':
             fan.ChangeDutyCycle(0)
             fan.stop()
             GPIO.cleanup()    
-            first_run = True
+            is_gpio_initialized = True
         
-        temp = measure_temp()
+        temp_CPU = measure_CPU_temp()
 
         # Start the fan if the temperature has reached the limit and the fan
         # isn't already running.
-        if temp > ON_THRESHOLD and not is_running:
+        if temp_CPU > ON_THRESHOLD and not is_running:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(GPIO_PIN, GPIO.OUT)
             fan = GPIO.PWM(GPIO_PIN, 100)
@@ -51,7 +57,7 @@ if __name__ == '__main__':
 
         # Stop the fan if the fan is running and the temperature has dropped
         # to 10 degrees below the limit.
-        elif is_running and temp < OFF_THRESHOLD:
+        elif is_running and temp_CPU < OFF_THRESHOLD:
             fan.ChangeDutyCycle(0)
             fan.stop()
             GPIO.cleanup()
