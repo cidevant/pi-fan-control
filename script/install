@@ -4,6 +4,8 @@ set -e
 
 cd "$(dirname "$0")/.."
 
+sudo apt install python3-lgpio python3-rpi.gpio
+
 echo "=> Installing fan controller...\n"
 sudo cp fancontrol.py /usr/local/bin/
 sudo chmod +x /usr/local/bin/fancontrol.py
