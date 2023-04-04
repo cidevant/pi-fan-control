@@ -2,6 +2,14 @@
 
 Raspberry Pi fan controller.
 
+## Control circuit
+
+* transistor: 2n2222
+* resistor: 1K 
+* diode: 1N4001
+
+![control-circuit](control-circuit-gpio.jpg)
+
 ## Description
 
 This repository provides scripts that can be run on the Raspberry Pi that will
